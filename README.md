@@ -1,91 +1,115 @@
-# Ping 0.5 — Android, equipes e comunicação offline
+<div align="center">
+  <img src="app/src/main/assets/logo.jpeg" alt="Logo do Ping" width="112">
+  <h1>Ping</h1>
+  <p><strong>Informações esportivas mais fáceis de encontrar e compartilhar.</strong></p>
+  <p>Aplicativo Android para atletas, técnicos e organizadores de eventos esportivos.</p>
+</div>
 
-Continuação do ZIP original em Kotlin + WebView. Login obrigatório antes da página inicial,
-três perfis, equipes/elencos, avisos autorizados, tutorial inicial e notificações Android.
+---
 
-**Leia [GUIA.md](GUIA.md)** para instalar, preparar a API, criar contas e demonstrar Nearby.
+## Por que o Ping?
 
-## Estrutura
+Em um evento esportivo, uma mudança de horário ou local precisa chegar a quem participa.
+Quando os dados ficam espalhados em panfletos e vários grupos de mensagens, é fácil perder
+uma atualização — e a conexão instável pode dificultar ainda mais o acesso.
 
-- `app/`: Android Kotlin, WebView local, Nearby Connections e Android Keystore.
-- `app/src/main/assets/`: interface real em HTML/CSS/JS, logo e Leaflet.
-- `server/server.py`: API Python + SQLite; autenticação original preservada e ampliada.
-- `server/administration.py`: autorização, equipes, elencos e aprovação de funções.
-- `server/security.py`: certificados e assinaturas ECDSA P-256.
-- `server/attachments.py`: arquivos no servidor local, metadados, limites e autorização de equipe.
-- `server/requirements.txt`: dependência de assinatura `cryptography`.
-- `server/test_rules.py`: verificações em memória das regras e assinaturas.
-- `server/test_server.py`: testes HTTP da API para execução posterior.
-- `PREVIA-PING.html`: prévia visual autossuficiente; dados exemplificativos, sem contas/conexões reais.
+O **Ping** explora uma forma de reunir as informações do evento e facilitar sua consulta.
+O projeto é um protótipo Android com foco em eventos multiesportivos.
 
-## Inicialização
+## O que o aplicativo oferece
+
+| Perfil | Recursos |
+| --- | --- |
+| **Atleta** | Consultar partidas, agenda, locais e alojamentos, avisos e boletins; encontrar e entrar em equipes. |
+| **Técnico** | Usar os recursos dos atletas, criar e gerenciar a própria equipe e publicar informações para ela. |
+| **Organização** | Administrar informações do evento e publicar avisos gerais, inclusive comunicados de emergência. |
+
+Outros recursos do protótipo:
+
+- Boletins com PDF, imagens ou links.
+- Notificações Android para novas informações.
+- Consulta a conteúdo já sincronizado e salvo no aparelho.
+- Tentativa de troca de avisos entre aparelhos próximos com Google Nearby Connections.
+- Interface em português e tutorial para o primeiro acesso.
+
+## Conectividade: o que esperar
+
+O Ping foi pensado para cenários de conectividade limitada, mas **não garante entrega de
+avisos sem internet**. A consulta offline depende de informações previamente sincronizadas.
+O Nearby precisa de preparação inicial, aparelhos compatíveis, permissões, Bluetooth e Wi-Fi
+ligados e o app aberto. Os anexos precisam ser baixados do servidor; não são enviados pelo
+Nearby.
+
+O servidor Python incluído **não está hospedado**. A versão do repositório é um protótipo
+de demonstração — não um sistema certificado para emergências. Leia
+[VALIDACAO.md](VALIDACAO.md) para ver o que foi verificado e o que ainda não foi testado
+em aparelhos físicos.
+
+## Prévia e documentação
+
+- [Guia de instalação e demonstração](GUIA.md)
+- [Relatório de validação e limitações](VALIDACAO.md)
+- [Arquivo da prévia visual](PREVIA-PING.html) — baixe o repositório e abra o arquivo no navegador; a página de arquivos do GitHub não executa a demonstração.
+
+## Começar
+
+### Preparar o servidor
+
+Requer Python 3 e conexão com a internet para instalar a dependência:
 
 ```sh
-python3 -m pip install -r server/requirements.txt
-python3 server/server.py --setup
+cd server
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python server.py --setup
 ```
 
-O primeiro `--setup` cria a conta organizadora. Nesta versão de apresentação, Atleta e
-Técnico entram sem aprovação. Técnicos criam sua própria equipe; atletas escolhem e entram.
-Somente o perfil Organização continua dependendo de aprovação no app.
-O servidor não está hospedado nem há senhas padrão embutidas.
+Na primeira execução, crie a conta da organização com uma senha própria. Não há senha
+padrão. Mantenha o mesmo banco e a chave de autoridade para preservar as contas e a
+confiança dos aparelhos.
 
-Variáveis opcionais de operação: `EVENTO_DB`, `EVENT_CODE`, `ORG_USER`, `ORG_PASSWORD`,
-`HOST`, `PORT`. Não versione banco, autoridade privada, tokens ou senhas.
-O arquivo `evento.sqlite3.authority.pem` contém a autoridade privada e deve ser preservado com segurança.
-Uma instalação do servidor serve um evento. Não reutilize o mesmo banco para outro código de evento.
+Para conectar um celular físico ao servidor de demonstração, configure no app o endereço IP
+do computador na rede local, por exemplo `http://192.168.1.20:8787`. No celular, `localhost`
+aponta para o próprio celular, não para o computador.
 
-## API
+### Compilar o aplicativo Android
 
-- `GET /api/ping`
-- `POST /api/register`: nome, usuário, senha, perfil solicitado e chave pública do aparelho.
-- `POST /api/login`: usuário, senha, chave pública.
-- `POST /api/logout`: revoga token.
-- `POST /api/events/CODE/sync`: sessão Bearer, registros assinados, chave pública.
-- `POST /api/manage`: sessão Bearer e operação autorizada de equipe/elenco/função.
-- `POST /api/attachments`: sessão Bearer, bytes PDF/JPG/PNG/WebP até 10 MB.
-- `GET /api/attachments/UUID`: download autenticado, respeitando a equipe do arquivo.
-
-Respostas de login/sync incluem certificado do aparelho e chave pública da autoridade,
-sem revelar chaves privadas. Sync inclui registros visíveis, IDs confirmados, equipes
-e, exclusivamente para organização, lista de usuários.
-
-Técnicos publicam `notice`, `agenda` e `bulletin`, público `team`, da própria equipe e sem prioridade
-`emergency`. Atletas não publicam. Organização publica `bulletin`, `notice`, `agenda`,
-`facility`; emergências são avisos para todo o evento.
-
-IDs de transporte são imutáveis. Edições/exclusões são registros assinados com `replaces`,
-`original` (prova assinada da autoria original) e `deleted`. O técnico altera apenas
-publicações de sua autoria na equipe; organização administra as demais. Público e equipe
-originais não mudam. A versão com maior `(created, éRevisão, id)` vence, inclusive exclusões.
-Recebimento fora de ordem não reverte uma exclusão mais recente. Não há exclusão instantânea
-em aparelhos isolados. Repetição idêntica não duplica; conflito não substitui.
-Anexos ficam em arquivos privados ao lado do banco, não como blobs SQLite, com hash SHA-256
-nos metadados assinados. Preserve `evento.sqlite3.files` nos backups e atualizações.
-Arquivos são baixados pelo servidor, não pelo Nearby. Links externos abrem fora da WebView.
-Boletins/avisos têm até 48h iniciais; agenda/locais até 7 dias. Revisões preservam pelo
-menos a validade anterior para impedir que versões antigas reapareçam antes dela.
-Fila local até confirmação do servidor.
-
-## Build
-
-JDK 17, Gradle 8.11.1, AGP 8.9.2, Kotlin 2.1.20, SDK 35, Android mínimo 26.
+Requer JDK 17 e Android SDK 35. Na pasta deste projeto:
 
 ```sh
 ./gradlew assembleDebug
 ```
 
-APK: `app/build/outputs/apk/debug/app-debug.apk`. Versão 0.5, applicationId `br.com.eventoperto`.
-Para atualizar versão já instalada, é necessária a mesma chave de assinatura.
+O APK de depuração será criado em `app/build/outputs/apk/debug/app-debug.apk`.
+O identificador Android é `br.com.eventoperto`; a versão atual do projeto é 0.5.
 
-## Limites
+## Estrutura do projeto
 
-Esta é uma versão de demonstração, não um sistema certificado para emergências.
-Nearby exige preparação online inicial, aparelhos compatíveis com Google Play Services,
-Wi-Fi/Bluetooth ligados, permissões, pareamento e app aberto. Autorizações offline
-podem valer por até 7 dias; revogação não é instantânea sem conexão.
-Não há criptografia por equipe no transporte Nearby; não publique dados confidenciais.
-Mapas-base e rotas não são garantidos offline. Não há LoRa, iOS, push instantâneo,
-hospedagem ativa da API ou garantia de entrega em multidão.
-WorkManager consulta novas informações online em segundo plano a partir de 15 minutos,
-sujeito às restrições Android. Leia o guia e o relatório de validação antes do uso.
+```text
+app/       Aplicativo Android em Kotlin e interface local em HTML/CSS/JavaScript
+server/    API Python, autenticação, equipes, avisos e anexos
+GUIA.md    Instruções detalhadas para instalação e demonstração
+VALIDACAO.md
+           Verificações executadas e itens que exigem teste em aparelhos reais
+```
+
+## Segurança e dados
+
+Não inclua neste repositório bancos de dados, senhas, tokens, chaves privadas ou dados reais
+de participantes. O `.gitignore` exclui os bancos locais, certificados privados, arquivos de
+ambiente e builds. A chave `evento.sqlite3.authority.pem` e o banco do servidor pertencem a
+cada instalação e devem ser guardados em backup seguro — nunca enviados ao GitHub.
+
+O app pode ser usado por menores de idade. Antes de qualquer uso real, a organização
+responsável deve definir o tratamento dos dados, as permissões e os avisos de privacidade.
+
+## Proposta de acesso
+
+A proposta do projeto é manter o acesso gratuito para atletas e buscar financiamento junto
+a organizadores ou patrocinadores. Esse modelo ainda precisa ser validado com eventos reais.
+
+## Licença
+
+Este repositório ainda não inclui um arquivo de licença. A publicação pública do código,
+por si só, não concede permissão de reutilização ou redistribuição.
