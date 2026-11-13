@@ -1,0 +1,9 @@
+.gradle/
+.idea/
+local.properties
+**/build/
+*.jks
+
+__pycache__/
+*.sqlite3*
+.env

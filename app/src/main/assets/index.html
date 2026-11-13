@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'none'; frame-src 'none'; object-src 'none'">
+  <meta name="theme-color" content="#f7f4fb">
+  <title>Ping · seu evento por perto</title>
+  <link rel="stylesheet" href="leaflet.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div id="demo-banner" class="demo-banner" hidden><strong>DEMONSTRAÇÃO</strong><span>Exemplos locais · sem conexão real, envio ou contas</span></div>
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="logo.jpeg" alt="Passarinho roxo do Ping">
+      <div><strong>Ping</strong><small>SEU EVENTO, POR PERTO</small></div>
+    </div>
+    <div class="top-actions"><span id="connection-chip" class="connection-chip">Offline</span><button id="profile" class="avatar" aria-label="Abrir conta">P</button></div>
+  </header>
+  <main id="main"></main>
+  <nav id="nav" aria-label="Navegação principal"></nav>
+  <button id="fab" class="fab" hidden></button>
+  <div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <section class="sheet">
+      <div class="sheet-head"><div><span class="eyebrow">PING</span><h2 id="modal-title"></h2></div><button id="close-modal" class="close" aria-label="Fechar">×</button></div>
+      <div id="modal-body"></div>
+    </section>
+  </div>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+  <script src="leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
